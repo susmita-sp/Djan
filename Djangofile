@@ -1,0 +1,75 @@
+django-admin startproject userform
+python manage.py startapp users
+from django.db import models
+
+class User(models.Model):
+    name = models.CharField(max_length=50)
+    dob = models.DateField()
+    email = models.EmailField()
+    phone_number = models.CharField(max_length=20)
+    from django import forms
+from .models import User
+
+class UserForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['name', 'dob', 'email', 'phone_number']
+        widgets = {
+            'dob': forms.DateInput(attrs={'type': 'date'}),
+        }
+        from django.shortcuts import render, redirect
+from django.contrib import messages
+from .forms import UserForm
+
+def user_form(request):
+    if request.method == 'POST':
+        form = UserForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            # send email to the form submitter
+            messages.success(request, 'Form submitted successfully')
+            return redirect('user_list')
+    else:
+        form = UserForm()
+    return render(request, 'users/user_form.html', {'form': form})
+    {% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <h1>User Form</h1>
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+</div>
+{% endblock %}
+from django.shortcuts import render
+from .models import User
+
+def user_list(request):
+    users = User.objects.all()
+    return render(request, 'users/user_list.html', {'users': users})
+    {% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <h1>User List</h1>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Date of Birth</th>
+                <th>Email</th>
+                <th>Phone Number</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ user.name }}</td>
+                <td>{{ user.dob }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.phone_number }}</td>
+            </tr>
+            {% endfor %}
